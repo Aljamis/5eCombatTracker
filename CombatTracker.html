@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Combat Tracker</title>
+    <style>
+        body {
+			width : 300%;
+<!--			max-width: 900px;  -->
+            margin: 2em auto;
+            font: .9em/1.2 Arial, Helvetica, sans-serif;
+        }
+
+        .round > div {
+            border-radius: 15px;
+            padding: 10px;
+            background-color: rgb(207,232,220);
+            border: 2px solid rgb(79,185,227);
+			
+			font: .7em/1.2 Arial, Helvetica, sans-serif;
+		}
+        
+		a {
+			font: .9em/1.2 Arial, Helvetica, sans-serif;
+		}
+		
+		.round {
+			display: grid;
+			grid-template-columns: repeat(auto-fit , minmax(160px, 160px));
+			grid-auto-rows: auto;
+			grid-gap: 2px;
+        }
+		
+        .targets > div {
+            border-radius: 15px;
+            padding: 10px;
+            background-color: rgb(235, 52, 52);
+            border: 2px solid rgb(79,185,227);
+		}
+		
+		.targets {
+			display: grid;
+			grid-template-columns: repeat(auto-fit , minmax(160px, 160px));
+			grid-auto-rows: auto;
+			grid-gap: 2px;
+        }
+	
+	<!--
+		GREEN :   23, 145, 66
+		RED   :   235, 52, 52
+	-->
+    </style>
+	
+	<script src="CombatTracker.js"></script>
+
+</head>
+
+<body>
+    <h1>Combat Tracker</h1>
+	<div class="addInitiative">
+		<input type="text" id="addTarget" name="addTarget" placeholder="Name" />
+		<input type="text" id="targetInit" name="targetInit" placeholder="Initiative" />
+		<button onclick="addToList()">Add Target</button>
+	</div>
+	
+	
+	<!--		The combatants     	-->
+    <div class="targets" id="targets">
+	</div>
+	
+	<div class="combatTracking" id="combatTracking">
+	</div>
+	
+    <div class="round">
+        <div>ATK - Goblin - 5</div>
+        <div>ATK - Vesil - 6</br>ATK - Vesil - 18 - 99</br>Rxn - Vesil - 13</div>
+        <div>ATK - Redfin - 5</div>
+    </div>
+	
+	<div id="startCombat">
+	<button name="startCombat" onclick="startCombat()">Start Combat</button>
+	</div>
+	
+</body>
+
+</html>
