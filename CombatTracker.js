@@ -34,14 +34,6 @@ function addToList() {
 	//  2 - Initiative is a Number
 	if (document.getElementById("addTarget").value =='') return;
 	if (isNaN(document.getElementById("targetInit").value)) return;
-
-	/*
-	var targetList = document.getElementById("targets");
-	var newTarget = document.createElement("div");
-	newTarget.innerHTML= document.getElementById("addTarget").value;
-	targetList.appendChild(newTarget);
-	*/
-	
 	
 	//  Create combatant and add combatant to array
 	var x = new Combatant( document.getElementById("addTarget").value
@@ -68,6 +60,28 @@ function addToList() {
 	document.getElementById("addTarget").value = "";
 	document.getElementById("addTarget").focus();
 	document.getElementById("targetInit").value = "";
+	
+	if ( document.getElementById("combatTracking").hasChildNodes() ) {
+		//  Combat has started
+		actorAddedDuringCombat();
+		addActorToDropDown( x );
+	}
+}
+
+
+
+function actorAddedDuringCombat() {
+	toggleNextPlayerColor();
+	
+	// Populate all previous rows and cells with stored Actions
+	//  Iterate Actors
+	for ( a=0 ; a<combatants.length ; a++ ) {
+		
+		//  Iterate through ROUNDS
+		for ( r=0 ; r<combatants[a].myActions.length ; r++ ) {
+			populatePrevCell( r , a );
+		}
+	}
 }
 
 
@@ -94,14 +108,6 @@ function toggleNextPlayerColor() {
 	var anActor = document.getElementById("Actor"+ currentActor);
 	anActor.style.backgroundColor = "rgb(23, 145, 66)";
 	prevActor = "Actor"+ currentActor;
-	
-	/*
-	 *  Moving this logic to NEXT user 
-	//  This should toggle back to the start
-	if (currentActor++ === combatants.length -1) {
-		currentActor = 0;
-	}
-	*/
 }
 
 
@@ -131,9 +137,6 @@ function createActionInputCell( currentRow ) {
 	currentRow.appendChild( newTurn );
 	
 	newTurn.innerHTML = actionInputHTML();
-	
-	//  possibly add logic here to add OPTIONS to the dropdown
-	//addActorsToDropDown();
 }
 
 
@@ -160,10 +163,13 @@ function addActorsToDropDown() {
 			continue;
 		}
 		
+		/*
 		var newOption = document.createElement("option");
 		newOption.value = combatants[i].creatureName;
 		newOption.text = combatants[i].creatureName;
 		targetDropDown.add( newOption );
+		*/
+		addActorToDropDown( combatants[i] );
 	}
 	
 	//  Add OTHER option
@@ -173,14 +179,20 @@ function addActorsToDropDown() {
 	targetDropDown.add( newOption );
 }
 
+function addActorToDropDown( anActor ) {
+	var newOption = document.createElement("option");
+	newOption.value = anActor.creatureName;
+	newOption.text = anActor.creatureName;
+	document.getElementById("targetDropDown").add( newOption );
+}
+
 
 /*
  *  Current player turn is over.  
  */
 function nextTurn() {
 	//  Remove input from previous cells
-	var currentRowCell = document.getElementById("Round"+ currentRound +'-'+ prevActor);
-	currentRowCell.innerHTML = '';
+	populatePrevCell( currentRound , prevActor );
 	/*
 	*/
 
@@ -198,6 +210,45 @@ function nextTurn() {
 	
 	toggleNextPlayerColor();
 }
+
+
+
+function populatePrevCell( theRound , theActor ) {
+	/*
+	var currentRowCell = document.getElementById("Round"+ currentRound +'-'+ prevActor);
+	currentRowCell.innerHTML = '';
+	
+	if ( combatants[currentActor].myActions[currentRound] === undefined ) {
+		//  do nothing.  There are no actions to display.
+	} else {
+		if ( Array.isArray(combatants[currentActor].myActions[currentRound] ) ) {
+			for ( y=0 ; y<combatants[currentActor].myActions[currentRound].length ; y++ ) {
+				currentRowCell.innerHTML += createHTMLactionDIV( combatants[currentActor].myActions[currentRound][y] );
+			}
+		} else {
+			currentRowCell.innerHTML += createHTMLactionDIV( combatants[currentActor].myActions[currentRound] );
+		}
+	}
+	*/
+	var elActor = theActor;
+	if ( isNaN( theActor ) ) elActor = theActor.split('Actor')[1];
+	
+	var currentRowCell = document.getElementById("Round"+ theRound +'-Actor'+ elActor);
+	currentRowCell.innerHTML = '';
+	
+	if ( combatants[elActor].myActions[theRound] === undefined ) {
+		//  do nothing.  There are no actions to display.
+	} else {
+		if ( Array.isArray(combatants[elActor].myActions[theRound] ) ) {
+			for ( y=0 ; y<combatants[elActor].myActions[theRound].length ; y++ ) {
+				currentRowCell.innerHTML += createHTMLactionDIV( combatants[elActor].myActions[theRound][y] );
+			}
+		} else {
+			currentRowCell.innerHTML += createHTMLactionDIV( combatants[elActor].myActions[theRound] );
+		}
+	}
+}
+
 
 
 /*
@@ -234,14 +285,20 @@ function addAction() {
 
 
 function populateHTMLWithNewAction( myAction ) {
+	var currentHTML = document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML;
+	currentHTML += createHTMLactionDIV( myAction );
+	
+	document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML = '';
+	document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML = currentHTML;
+}
+
+
+function createHTMLactionDIV( myAction )  {
 	var SEP = ' - ';
 	var theString = '<div>'+ myAction.action + SEP + myAction.target + SEP + myAction.rollDC;
 	if ( myAction.damage ) theString += SEP + myAction.damage;
 	
-	var currentHTML = document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML;
-	currentHTML += theString;
-	document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML = '';
-	document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML = currentHTML;
+	return theString +'</div>';
 }
 
 function testMe() {

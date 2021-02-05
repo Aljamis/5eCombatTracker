@@ -12,6 +12,11 @@
             font: .9em/1.2 Arial, Helvetica, sans-serif;
         }
 
+        
+		a {
+			font: .9em/1.2 Arial, Helvetica, sans-serif;
+		}
+		
         .round > div {
             border-radius: 15px;
             padding: 10px;
@@ -20,11 +25,6 @@
 			
 			font: .7em/1.2 Arial, Helvetica, sans-serif;
 		}
-        
-		a {
-			font: .9em/1.2 Arial, Helvetica, sans-serif;
-		}
-		
 		.round {
 			display: grid;
 			grid-template-columns: repeat(auto-fit , minmax(160px, 160px));
@@ -69,14 +69,7 @@
     <div class="targets" id="targets">
 	</div>
 	
-	<div class="combatTracking" id="combatTracking">
-	</div>
-	
-    <div class="round">
-        <div>ATK - Goblin - 5</div>
-        <div>ATK - Vesil - 6</br>ATK - Vesil - 18 - 99</br>Rxn - Vesil - 13</div>
-        <div>ATK - Redfin - 5</div>
-    </div>
+	<div class="combatTracking" id="combatTracking"></div>
 	
 	<div id="startCombat">
 	<button name="startCombat" onclick="startCombat()">Start Combat</button>
