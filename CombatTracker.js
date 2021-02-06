@@ -22,9 +22,9 @@
 
 //  Globals		
 		var combatants = [];
-		var currentActor = 0;  // Whose turn is it??
+		var currentActorIndex = 0;  // Whose turn is it??
 		var prevActor;
-		var currentRound = 0;  // Which round of combat are we in?
+		var currentRoundIndex = 0;  // Which round of combat are we in?
 
 
 
@@ -34,6 +34,10 @@ function addToList() {
 	//  2 - Initiative is a Number
 	if (document.getElementById("addTarget").value =='') return;
 	if (isNaN(document.getElementById("targetInit").value)) return;
+	
+	//  If an Actor has been added during combat this value will be populated
+	//  otherwise it will be undefined.  It will be used later to determine turn-order
+	var currentActor = combatants[currentActorIndex];
 	
 	//  Create combatant and add combatant to array
 	var x = new Combatant( document.getElementById("addTarget").value
@@ -63,31 +67,65 @@ function addToList() {
 	
 	if ( document.getElementById("combatTracking").hasChildNodes() ) {
 		//  Combat has started
-		actorAddedDuringCombat();
-		addActorToDropDown( x );
+		actorAddedDuringCombat( currentActor );
 	}
 }
 
 
 
-function actorAddedDuringCombat() {
-	toggleNextPlayerColor();
+/*
+ *  A new Actor has been added
+ *  1)  Toggle the color of whose turn it is supposed to be.  
+ *  2)  Store this index as currentActorIndex
+ *
+ *  3)  Clear out all the existing combat cells
+ *  4)  Iterate through each round and Actor populating combat cells
+ */
+function actorAddedDuringCombat( myTurn ) {
+	//  Clear out previous combat
+	document.getElementById("combatTracking").innerHTML = "";
 	
+	
+	var roundsThatHaveBeenPlayed = currentRoundIndex;
 	// Populate all previous rows and cells with stored Actions
-	//  Iterate Actors
-	for ( a=0 ; a<combatants.length ; a++ ) {
-		
-		//  Iterate through ROUNDS
-		for ( r=0 ; r<combatants[a].myActions.length ; r++ ) {
-			populatePrevCell( r , a );
+	//  Iterate ROUNDS
+	for ( R=0 ; R<roundsThatHaveBeenPlayed ; R++ ) {
+		currentRoundIndex = R;
+		createCombatRound();
+		//  Iterate through ACTORS
+		for ( A=0 ; A<combatants.length ; A++ ) {
+			currentActorIndex = A;
+			document.getElementById("Round"+ currentRoundIndex).appendChild( createCombatCell() );
+			
+			populatePrevCell( R , A );
 		}
 	}
+	
+	//  Is a new Round required?
+	if ( currentActorIndex +1 >= combatants.length ) {
+		currentRoundIndex++;
+		createCombatRound();
+	}
+	
+	
+	//  for each Combatant look for whose turn it is
+	for ( var y=0 ; y<combatants.length ; y++ ) {
+		currentActorIndex = y;
+		if ( combatants[y].creatureName === myTurn.creatureName ) break;
+		
+		//  Empty cells until the Turn is identified
+		document.getElementById("Round"+ currentRoundIndex).appendChild( createCombatCell() );
+	}
+	toggleNextPlayerColor();
+	
+	addCombatCellToRound();
 }
 
 
 
 function startCombat() {
 	createCombatRound();
+	addCombatCellToRound();
 	toggleNextPlayerColor();
 	
 	document.getElementById( "startCombat" ).style.visibility = "hidden";
@@ -105,9 +143,9 @@ function toggleNextPlayerColor() {
 		resetActor.style.backgroundColor = "rgb(235, 52, 52)";	
 	}
 
-	var anActor = document.getElementById("Actor"+ currentActor);
+	var anActor = document.getElementById("Actor"+ currentActorIndex);
 	anActor.style.backgroundColor = "rgb(23, 145, 66)";
-	prevActor = "Actor"+ currentActor;
+	prevActor = "Actor"+ currentActorIndex;
 }
 
 
@@ -119,24 +157,40 @@ function createCombatRound() {
 	
 	//  new Row added
 	var newRound = document.createElement("div");
-	newRound.id = "Round"+ currentRound;
+	newRound.id = "Round"+ currentRoundIndex;
 	newRound.className = "round";
-
-	// Still need to add a cell
-	createActionInputCell( newRound );
 	
 	roundTracker.appendChild( newRound );
+}
+
+
+
+/*
+ *  Add a new cell to the current Round and include all the Action Inputs
+ */
+function addCombatCellToRound() {
+	createActionInputCell( document.getElementById("Round"+ currentRoundIndex) );
 	addActorsToDropDown();
 }
 
 
 function createActionInputCell( currentRow ) {
-	var newTurn = document.createElement("div");
-	newTurn.innerHTML = "";
-	newTurn.id = 'Round'+ currentRound +'-Actor'+  currentActor;
+	var newTurn = createCombatCell();
 	currentRow.appendChild( newTurn );
 	
 	newTurn.innerHTML = actionInputHTML();
+}
+
+
+/*
+ *  Returns a new Cell
+ */
+function createCombatCell() {
+	var newTurn = document.createElement("div");
+	newTurn.innerHTML = "";
+	newTurn.id = 'Round'+ currentRoundIndex +'-Actor'+  currentActorIndex;
+	
+	return newTurn;
 }
 
 
@@ -159,16 +213,10 @@ function addActorsToDropDown() {
 	
 	for (i=0 ; i<combatants.length ; i++ ) {
 		//  Do not populate with the current Actor.  Avoids attacking yourself
-		if (combatants[currentActor].creatureName === combatants[i].creatureName ) {
+		if (combatants[currentActorIndex].creatureName === combatants[i].creatureName ) {
 			continue;
 		}
 		
-		/*
-		var newOption = document.createElement("option");
-		newOption.value = combatants[i].creatureName;
-		newOption.text = combatants[i].creatureName;
-		targetDropDown.add( newOption );
-		*/
 		addActorToDropDown( combatants[i] );
 	}
 	
@@ -192,19 +240,20 @@ function addActorToDropDown( anActor ) {
  */
 function nextTurn() {
 	//  Remove input from previous cells
-	populatePrevCell( currentRound , prevActor );
+	populatePrevCell( currentRoundIndex , prevActor );
 	/*
 	*/
 
-	if (currentActor++ === combatants.length -1) {
-		currentActor = 0;
+	if (currentActorIndex++ === combatants.length -1) {
+		currentActorIndex = 0;
 	}
 	
-	if ( currentActor === 0) {
-		currentRound++;
+	if ( currentActorIndex === 0) {
+		currentRoundIndex++;
 		createCombatRound();
+		addCombatCellToRound();
 	}  else  {
-		createActionInputCell( document.getElementById("Round"+ currentRound) ); 
+		createActionInputCell( document.getElementById("Round"+ currentRoundIndex) ); 
 		addActorsToDropDown();
 	}
 	
@@ -214,22 +263,6 @@ function nextTurn() {
 
 
 function populatePrevCell( theRound , theActor ) {
-	/*
-	var currentRowCell = document.getElementById("Round"+ currentRound +'-'+ prevActor);
-	currentRowCell.innerHTML = '';
-	
-	if ( combatants[currentActor].myActions[currentRound] === undefined ) {
-		//  do nothing.  There are no actions to display.
-	} else {
-		if ( Array.isArray(combatants[currentActor].myActions[currentRound] ) ) {
-			for ( y=0 ; y<combatants[currentActor].myActions[currentRound].length ; y++ ) {
-				currentRowCell.innerHTML += createHTMLactionDIV( combatants[currentActor].myActions[currentRound][y] );
-			}
-		} else {
-			currentRowCell.innerHTML += createHTMLactionDIV( combatants[currentActor].myActions[currentRound] );
-		}
-	}
-	*/
 	var elActor = theActor;
 	if ( isNaN( theActor ) ) elActor = theActor.split('Actor')[1];
 	
@@ -264,19 +297,19 @@ function addAction() {
 	
 	//  Add the ActorAction to the currentRound and CurrentActor
 	//  if one already exists make it into an array
-	if ( combatants[currentActor].myActions[currentRound] === undefined ) {
-		combatants[currentActor].myActions[currentRound] =  myAction ;
+	if ( combatants[currentActorIndex].myActions[currentRoundIndex] === undefined ) {
+		combatants[currentActorIndex].myActions[currentRoundIndex] =  myAction ;
 	} else {
-		if ( Array.isArray(combatants[currentActor].myActions[currentRound] ) ) {
+		if ( Array.isArray(combatants[currentActorIndex].myActions[currentRoundIndex] ) ) {
 			
 		} else {
 			// Make the old action an array
-			var prevAction = combatants[currentActor].myActions[currentRound];
-			combatants[currentActor].myActions[currentRound] = [];
-			combatants[currentActor].myActions[currentRound].push( prevAction );
+			var prevAction = combatants[currentActorIndex].myActions[currentRoundIndex];
+			combatants[currentActorIndex].myActions[currentRoundIndex] = [];
+			combatants[currentActorIndex].myActions[currentRoundIndex].push( prevAction );
 		}
 		// push the newAction into the array
-		combatants[currentActor].myActions[currentRound].push( myAction );
+		combatants[currentActorIndex].myActions[currentRoundIndex].push( myAction );
 	}
 	
 	populateHTMLWithNewAction( myAction );
@@ -285,11 +318,11 @@ function addAction() {
 
 
 function populateHTMLWithNewAction( myAction ) {
-	var currentHTML = document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML;
+	var currentHTML = document.getElementById("Round"+ currentRoundIndex +'-Actor'+ currentActorIndex).innerHTML;
 	currentHTML += createHTMLactionDIV( myAction );
 	
-	document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML = '';
-	document.getElementById("Round"+ currentRound +'-Actor'+ currentActor).innerHTML = currentHTML;
+	document.getElementById("Round"+ currentRoundIndex +'-Actor'+ currentActorIndex).innerHTML = '';
+	document.getElementById("Round"+ currentRoundIndex +'-Actor'+ currentActorIndex).innerHTML = currentHTML;
 }
 
 
@@ -299,8 +332,4 @@ function createHTMLactionDIV( myAction )  {
 	if ( myAction.damage ) theString += SEP + myAction.damage;
 	
 	return theString +'</div>';
-}
-
-function testMe() {
-	alert("yup");
 }
